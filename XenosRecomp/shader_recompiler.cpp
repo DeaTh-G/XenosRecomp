@@ -18,11 +18,11 @@ static constexpr const char* USAGE_TYPES[] =
     "float4", // POSITION
     "float4", // BLENDWEIGHT
     "uint4", // BLENDINDICES
-    "uint4", // NORMAL
+    "float4", // NORMAL
     "float4", // PSIZE
     "float4", // TEXCOORD
-    "uint4", // TANGENT
-    "uint4", // BINORMAL
+    "float4", // TANGENT
+    "float4", // BINORMAL
     "float4", // TESSFACTOR
     "float4", // POSITIONT
     "float4", // COLOR
@@ -189,14 +189,19 @@ void ShaderRecompiler::recompile(const VertexFetchInstruction& instr, uint32_t a
     switch (findResult->second.usage)
     {
     case DeclUsage::Normal:
-    case DeclUsage::Tangent:
-    case DeclUsage::Binormal:
-        specConstantsMask |= SPEC_CONSTANT_R11G11B10_NORMAL;
-        print("tfetchR11G11B10(");
+        print("swapFloats(g_SwappedNormals, ");
         break;
-
+    case DeclUsage::Tangent:
+        print("swapFloats(g_SwappedTangents, ");
+        break;
+    case DeclUsage::Binormal:
+        print("swapFloats(g_SwappedBinormals, ");
+        break;
+    case DeclUsage::BlendWeight:
+        print("swapFloats(g_SwappedBlendWeights, ");
+        break;
     case DeclUsage::TexCoord:
-        print("tfetchTexcoord(g_SwappedTexcoords, ");
+        print("swapFloats(g_SwappedTexcoords, ");
         break;
     }
 
@@ -207,9 +212,7 @@ void ShaderRecompiler::recompile(const VertexFetchInstruction& instr, uint32_t a
     case DeclUsage::Normal:
     case DeclUsage::Tangent:
     case DeclUsage::Binormal:
-        out += ')';
-        break;
-
+    case DeclUsage::BlendWeight:
     case DeclUsage::TexCoord:
         print(", {})", uint32_t(findResult->second.usageIndex));
         break;
